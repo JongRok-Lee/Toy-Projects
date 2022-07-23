@@ -1,8 +1,8 @@
-# 스티칭 과제
+# Stitching Implementation
 > ## 사용 라이브러리
-> Opencv 
+> Opencv without Stitching API
 
-## 과제 풀이 과정 설명
+## 과정 설명
 ### 1. **ORB**와 **SIFT**를 사용하여, 두 사진의 **Feature Points**를 검출.
 ```
   cv::Ptr<cv::Feature2D> detector = cv::SIFT::create();
