@@ -1,34 +1,103 @@
 #include "module.h"
 
-cv::Mat RANSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, int& max_iter, double& resThr) {
+cv::Mat PROSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, const int& max_iter, const double& resThr) {
+    /*
+    1. Sorting
+    2. Set n, Tn'
+    3. Choose m matches in n subset (iteration Num = t)
+        3.1 if t > Tn', n = n + 1 and t = 0
+            else, t = t + 1
+    4. Get Homography with m matches
+    5. Get a number of inliers(inlierNum)
+    6. If inlierNum(i) is greater than (i-1), update Homography
+       else, go to 3.
+    Until max iteration (20000)
+    */
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    int n = 4;
+    int cnt = 0, inlierNum, loopT = 1, maxInlierNum = 0, Tnp = 1;
+    double Tn = 1.0, tempTn;
+    int earlyStopNum = static_cast<int>(ptsT.size()* 0.75);
+    std::cout << "Early Stop num : " << earlyStopNum << std::endl;
+    std::vector<int> index;
+    cv::Mat Hk, H;
+    std::cout << "Start PROSAC" << std::endl;
+    std::cout << "Total num: " << ptsM.size() << std::endl;
+    while (cnt <= max_iter && n <= ptsT.size()) {
+        std::uniform_int_distribution<int> uid(0, n);
+        index = get_sampleIdx(uid, gen);
+        Hk = get_Hk(ptsT, ptsM, index);
+        inlierNum = countInlier(ptsT, ptsM, Hk, resThr);
+
+        if (inlierNum > maxInlierNum) {
+            H = Hk;
+            maxInlierNum = inlierNum;
+            std::cout << "i: " << cnt  << "\t" << "n: " << n << "\t" << "Num: " <<  maxInlierNum << std::endl;
+            if (maxInlierNum >= earlyStopNum) {
+                std::cout << "Early Stop!" << "\t" << "iter: " << cnt << std::endl;
+                return H;
+            }
+        }
+        
+        if (loopT == Tnp) {
+            n++;
+            tempTn = (static_cast<double>(n+1) / static_cast<double>(n+1-4)) * Tn;
+            Tnp = Tnp + (tempTn -Tn);
+            Tn = tempTn;
+            loopT = 0;
+        }
+        else {
+            loopT++;
+        }
+        
+        cnt++;
+        
+    }
+    std::cout << "Max iteration!" << "\t" << "n: " << n << "\t" << "iter: " << cnt << std::endl;
+    return H;
+}
+
+cv::Mat RANSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, const int& max_iter, const double& resThr) {
+    /*
+    1. Choose m matches in dataset
+    4. Get Homography with m matches
+    5. Get a number of inliers(inlierNum)
+    6. If inlierNum(i) is greater than (i-1), update Homography
+       else, go to 1.
+    Until max iteration (20000)
+    */
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> uid(0, ptsT.size() - 1);
     int cnt = 0, inlierNum, maxInlierNum = 0;
+    int earlyStopNum = static_cast<int>(ptsT.size()* 0.75);
+    std::cout << "Early Stop num : " << earlyStopNum << std::endl;
     std::vector<int> index;
     cv::Mat Hk, H;
+    std::cout << "Start RANSAC" << std::endl;
     std::cout << "Total num: " << ptsM.size() << std::endl;
     while (cnt <= max_iter) {
         index = get_sampleIdx(uid, gen);
         Hk = get_Hk(ptsT, ptsM, index);
         inlierNum = countInlier(ptsT, ptsM, Hk, resThr);
-        maxInlierNum = std::max(maxInlierNum, inlierNum);
-        if (maxInlierNum == inlierNum) {
+
+        if (inlierNum > maxInlierNum) {
             H = Hk;
-            std::cout << "i: " << cnt << "\t" << "Num: " <<  inlierNum << std::endl;
-            if (maxInlierNum >= static_cast<int>(ptsT.size()* 0.95)) {
-                std::cout << "Early Stop!" << std::endl;
+            maxInlierNum = inlierNum;
+            std::cout << "i: " << cnt << "\t" << "Num: " <<  maxInlierNum << std::endl;
+            if (maxInlierNum >= earlyStopNum) {
+                std::cout << "Early Stop!" << "\t" << "iter: " << cnt << std::endl;
                 return H;
             }
         }
         cnt++;
     }
-    std::cout << "Max iteration!" << std::endl;
+    std::cout << "Max iteration!" << "\t" << "iter: " << cnt << std::endl;
     return H;
-
 }
 
-int countInlier(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, cv::Mat& Hk, double& resThr) {
+int countInlier(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, cv::Mat& Hk, const double& resThr) {
     Eigen::Vector3d ptsMe, ptsTe, M2Te, errorV;
     Eigen::MatrixXd He;
     double residual;
@@ -84,12 +153,14 @@ cv::Mat get_Hk(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, std
     return Hcv;
 }
 
-cv::Mat DLT_H(std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM, int& max_iter, double& resThr) {
+std::pair<cv::Mat, cv::Mat> DLT_H(std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM, const int& max_iter, const double& resThr) {
     std::vector<cv::Point2d> ptsT = ptsTM.first;
     std::vector<cv::Point2d> ptsM = ptsTM.second;
-    cv::Mat H = RANSAC(ptsT, ptsM, max_iter, resThr);
+    cv::Mat H1 = RANSAC(ptsT, ptsM, max_iter, resThr);
+    cv::Mat H2 = PROSAC(ptsT, ptsM, max_iter, resThr);
+    std::pair<cv::Mat, cv::Mat> Hs(H1, H2);
     
-    return H;
+    return Hs;
 }
 
 std::vector<int> get_sampleIdx(std::uniform_int_distribution<int>& uid, std::mt19937& gen) {
@@ -121,6 +192,8 @@ std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> get_pts(cv::Mat& t
     std::vector<std::vector<cv::DMatch>> matches;
     std::vector<cv::DMatch> goodMatches;
     mathcher ->knnMatch(descT, descM, matches, 2);
+
+    // Rho
     for (int i = 0; i < matches.size(); ++i)
 	{
 		if (matches[i][0].distance < 0.75 * matches[i][1].distance)
@@ -129,11 +202,16 @@ std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> get_pts(cv::Mat& t
 		}
 	}
 
+    // Sorting For PROSAC
+    std::sort(goodMatches.begin(), goodMatches.end());
+    std::vector<cv::DMatch> sortedGoodMatches(goodMatches.begin(), goodMatches.end());
+
+
     std::vector<cv::Point2d> ptsT, ptsM;
-	for (int i = 0 ; i < goodMatches.size() ; i++)
+	for (int i = 0 ; i < sortedGoodMatches.size() ; i++)
 	{
-		ptsT.push_back(kpT[goodMatches[i].queryIdx].pt);
-		ptsM.push_back(kpM[goodMatches[i].trainIdx].pt);
+		ptsT.push_back(kpT[sortedGoodMatches[i].queryIdx].pt);
+		ptsM.push_back(kpM[sortedGoodMatches[i].trainIdx].pt);
 	}
     std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM;
     ptsTM.first = ptsT;
