@@ -10,8 +10,9 @@
 cv::Mat H_transform(cv::Mat& moveImg, cv::Mat& H);
 cv::Mat get_H(std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM);
 std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> get_pts(cv::Mat& targetImg, cv::Mat& moveImg);
-cv::Mat DLT_H(std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM, int& max_num, double& resThr);
-cv::Mat RANSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, int& max_iter, double& resThr);
+std::pair<cv::Mat, cv::Mat> DLT_H(std::pair<std::vector<cv::Point2d>, std::vector<cv::Point2d>> ptsTM, const int& max_iter, const double& resThr);
+cv::Mat RANSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, const int& max_iter, const double& resThr);
+cv::Mat PROSAC(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, const int& max_iter, const double& resThr);
 std::vector<int> get_sampleIdx(std::uniform_int_distribution<int>& uid, std::mt19937& gen);
 cv::Mat get_Hk(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, std::vector<int> index);
-int countInlier(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, cv::Mat& Hk, double& resThr);
+int countInlier(std::vector<cv::Point2d> ptsT, std::vector<cv::Point2d> ptsM, cv::Mat& Hk, const double& resThr);
