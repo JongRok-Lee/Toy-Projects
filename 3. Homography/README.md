@@ -5,7 +5,8 @@
 ![](sources/01.jpg)
 ### DLT (Direct Linear Transform)
 $x_1 = Hx_2$ --> $x_1-Hx_2 = 0$ --> $||Ap|| = 0$  
-$p = [H_{1} H_{2} \ldots H_{9}]$
+$p = [H_{1} H_{2} \ldots H_{9}]$  
+$A = UDV^{T}$, and $p = V[:, -1]$
 
 ### RANSAC, PROSAC 결과
 #### OpenCV (Ground Truth)
