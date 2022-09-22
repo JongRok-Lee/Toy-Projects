@@ -21,4 +21,4 @@ However I haven't make this yet.
 I would keep developing it too.
 
 ## 2. Non-automatic Threshold Selection (Heuristic method)
-To find optimal Corner, we need find proper threshold heuristically
+To find optimal Corner, we need to find proper threshold heuristically
