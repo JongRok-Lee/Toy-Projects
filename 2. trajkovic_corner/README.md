@@ -1,7 +1,7 @@
 # FAST Corner Detection 1998 (Trajkovic’s corner)
 
 # 1. Goal of Project
-This project is for implement FAST Corner Detection algorithm based on Miroslav Trajkovic' paper.   
+This project is for implement FAST Corner Detection algorithm based on Miroslav Trajkovic's paper.   
 [see the paper](https://www.researchgate.net/profile/Miroslav-Trajkovic/publication/223831601_Fast_Corner_Detection/links/5a56774645851547b1bf1d34/Fast-Corner-Detection.pdf)  
 
 ![](result/Corner.png)  
