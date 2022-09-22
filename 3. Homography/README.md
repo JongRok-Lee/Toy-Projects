@@ -2,10 +2,10 @@
 #### 변환할 이미지 평면
 ![](sources/02.jpg)
 #### 변환 결과가 될 타겟 이미지 평면
-
-### DLT (Direct Linear Transform)
-$x_1 = Hx_2$
 ![](sources/01.jpg)
+### DLT (Direct Linear Transform)
+$x_1 = Hx_2$ --> $x_1-Hx_2 = 0$ --> $||Ap|| = 0$
+
 ### RANSAC, PROSAC 결과
 #### OpenCV (Ground Truth)
 ![](results/opencv.png)
